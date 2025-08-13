@@ -1,3 +1,61 @@
 ---
 alwaysApply: true
 ---
+ 
+### Coding Standards (Employee API)
+
+- **Language/Framework**: Java 8, Spring Boot 2.7.x, H2 for local/in-memory DB.
+- **Style**: Follow Google Checkstyle (runs on `mvn validate`). Keep code readable and small.
+- **Indentation**: Use existing file indentation; do not mix tabs/spaces. Java uses 4 spaces.
+
+### Architecture & Structure
+- **Layers**: `controller` → `service` → `repository`. Controllers must not use repositories directly.
+- **Packages**: keep features under `controller`, `service`, `service.impl`, `repository`, `model`, `config`, `aop`.
+- **Transactions**: Annotate write operations in the service layer with `@Transactional` when needed.
+
+### REST API Guidelines
+- **Resource naming**: plural nouns (e.g., `/api/employees`).
+- **HTTP methods**: GET (read), POST (create), PUT (replace), DELETE (remove).
+- **Status codes**: 200/201 on success, 204 on delete, 404 if not found, 400 for validation errors.
+- **Location header**: include on successful POST creates.
+- **Pagination**: add optional `page`/`size` when returning large collections.
+
+### Validation & DTOs
+- Use `javax.validation` annotations on request models and `@Valid` in controllers.
+- For simple cases returning entities is acceptable; introduce DTOs if the API surface or security needs grow.
+
+### Error Handling
+- Prefer `ResponseEntity` in controllers.
+- Centralize exception handling with `@ControllerAdvice` (map to meaningful HTTP responses + JSON error body).
+
+### Logging
+- Use SLF4J: `private static final Logger log = LoggerFactory.getLogger(CurrentClass.class);`
+- Do not log secrets or PII; log intent and identifiers.
+- Use parameterized logs (`log.info("Updated id={} status={}", id, status)`).
+- Rely on AOP timing (`LoggingAspect`) rather than duplicating timing logs.
+
+### Security
+- Basic Auth enabled; protect `/api/**`. Keep `/h2-console/**` open only for local dev.
+- Avoid role checks in controllers when URL-based rules suffice; configure in `SecurityConfig`.
+
+### Persistence
+- Keep JPA entities simple (fields + mappings). Avoid business logic inside entities.
+- For read-heavy endpoints, consider projections or DTOs; avoid N+1 queries.
+
+### Configuration
+- No secrets in source. Use properties/profiles and environment overrides.
+- Keep defaults in `application.properties`. Add profile-specific files if needed.
+
+### Testing
+- Unit tests: service layer with Mockito (mock repositories).
+- Web tests: `@WebMvcTest` for controllers with Spring Security test support.
+- Integration tests: `@SpringBootTest` using H2 for repository boundaries.
+
+### Performance & Reliability
+- Use pagination for large lists; avoid returning unbounded data sets.
+- Fail fast on invalid input; validate at the boundary (controller/service).
+
+### Documentation & PRs
+- Update `README.md` and `PROJECT_RULES.md` when adding features or endpoints.
+- Conventional commits preferred (e.g., `feat:`, `fix:`, `docs:`, `test:`).
+- PR checklist: build passes, tests added/updated, Checkstyle warnings addressed.
